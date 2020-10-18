@@ -1,7 +1,5 @@
 package com.nesroht.papi.expansion.heroes;
 
-import me.clip.placeholderapi.PlaceholderAPI;
-import me.clip.placeholderapi.PlaceholderHook;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 
 import org.bukkit.Bukkit;
@@ -24,9 +22,10 @@ public class HeroesExpansion extends PlaceholderExpansion {
      * Since this expansion requires api access to the plugin "SomePlugin"
      * we must check if "SomePlugin" is on the server in this method
      */
+
     @Override
     public boolean canRegister() {
-        return Bukkit.getPluginManager().getPlugin(getPlugin()) != null;
+        return Bukkit.getPluginManager().getPlugin(this.getRequiredPlugin()) != null;
     }
 
     /**
@@ -35,12 +34,16 @@ public class HeroesExpansion extends PlaceholderExpansion {
      */
     @Override
     public boolean register() {
-        boolean hooked = false;
-        this.heroes = (Heroes)Bukkit.getPluginManager().getPlugin(this.getPlugin());
-        if (this.heroes != null) {
-            hooked = PlaceholderAPI.registerPlaceholderHook((String)this.getIdentifier(), (PlaceholderHook)this);
+        if(!canRegister()){
+            return false;
         }
-        return hooked;
+        this.heroes = (Heroes)Bukkit.getPluginManager().getPlugin(this.getRequiredPlugin());
+
+        if(this.heroes == null){
+            return false;
+        }
+
+        return super.register();
     }
 
     /**
@@ -69,18 +72,28 @@ public class HeroesExpansion extends PlaceholderExpansion {
      * if your dependency is not loaded when this hook is registered, it will be added to a cache to be
      * registered when plugin: "getPlugin()" is enabled on the server.
      */
-    @Override
+    /**@Override
     public String getPlugin() {
         return "Heroes";
-    }
+    }**/
 
+    /**
+     * Returns the name of the required plugin.
+     *
+     * @return {@code DeluxeTags} as String
+     */
+    @Override
+    public String getRequiredPlugin() {
+        return "Heroes";
+    }
     /**
      * This is the version of this expansion
      */
     @Override
     public String getVersion() {
-        return "1.0.0";
+        return "1.0.1";
     }
+
 
     /**
      * This is the method called when a placeholder with our identifier is found and needs a value
@@ -92,6 +105,7 @@ public class HeroesExpansion extends PlaceholderExpansion {
             return "";
         }
         String sk;
+
         Hero h = heroes.getCharacterManager().getHero(p);
         // %example_placeholder1%
         if (identifier.equals("party_leader")) {
@@ -134,51 +148,51 @@ public class HeroesExpansion extends PlaceholderExpansion {
         	return String.valueOf(h.getHeroClass().getName());
         }
         else if (identifier.equals("class2")) {
-        	return String.valueOf(h.getSecondClass().getName());
+        	return String.valueOf(h.getSecondaryClass().getName());
         }
         else if (identifier.equals("class_level")) {
-        	return String.valueOf(h.getLevel(h.getHeroClass()));
+        	return String.valueOf(h.getHeroLevel(h.getHeroClass()));
         }
         else if (identifier.equals("class2_level")) {
-        	return String.valueOf(h.getLevel(h.getSecondClass()));
+        	return String.valueOf(h.getTieredLevel(h.getSecondaryClass()));
         }
         else if (identifier.equals("class_exp")) {
-        	if (h.getLevel(h.getHeroClass()) == 1) {
+        	if (h.getHeroLevel(h.getHeroClass()) == 1) {
         		return String.valueOf(Math.round(h.getExperience(h.getHeroClass())));
         	}
         	else {
-        		return String.valueOf(Math.round(h.getExperience(h.getHeroClass())-Properties.getTotalExp(h.getLevel(h.getHeroClass()))));
+        		return String.valueOf(Math.round(h.getExperience(h.getHeroClass())-Properties.getTotalExp(h.getHeroLevel(h.getHeroClass()))));
         	}
         }
         else if (identifier.equals("class2_exp")) {
-        	if (h.getLevel(h.getSecondClass()) == 1) {
-        		return String.valueOf(Math.round(h.getExperience(h.getSecondClass())));
+        	if (h.getHeroLevel(h.getSecondaryClass()) == 1) {
+        		return String.valueOf(Math.round(h.getExperience(h.getSecondaryClass())));
         	}
         	else {
-        		return String.valueOf(Math.round(h.getExperience(h.getSecondClass())-Properties.getTotalExp(h.getLevel(h.getSecondClass()))));
+        		return String.valueOf(Math.round(h.getExperience(h.getSecondaryClass())-Properties.getTotalExp(h.getHeroLevel(h.getSecondaryClass()))));
         	}
         }
         else if (identifier.equals("class_maxexp")) {
-        	if (h.getLevel(h.getHeroClass()) != h.getHeroClass().getMaxLevel()) {
-        		return String.valueOf(Math.round(Properties.getExp(h.getLevel(h.getHeroClass())+1)));
+        	if (h.getHeroLevel(h.getHeroClass()) != h.getHeroClass().getMaxLevel()) {
+        		return String.valueOf(Math.round(Properties.getExp(h.getHeroLevel(h.getHeroClass())+1)));
         	}
         	return "0";
         }
         else if (identifier.equals("class2_maxexp")) {
-        	if (h.getLevel(h.getSecondClass()) != h.getSecondClass().getMaxLevel()) {
-        		return String.valueOf(Math.round(Properties.getExp(h.getLevel(h.getSecondClass())+1)));
+        	if (h.getHeroLevel(h.getSecondaryClass()) != h.getSecondaryClass().getMaxLevel()) {
+        		return String.valueOf(Math.round(Properties.getExp(h.getHeroLevel(h.getSecondaryClass())+1)));
         	}
         	return "0";
         }
         else if (identifier.equals("class_exp_percent")) {
-        	if (h.getLevel(h.getHeroClass()) != h.getHeroClass().getMaxLevel()) {
+        	if (h.getHeroLevel(h.getHeroClass()) != h.getHeroClass().getMaxLevel()) {
         		return String.valueOf(Math.round(h.getExpPercent(h.getHeroClass())));
         	}
         	return "100";
         }
         else if (identifier.equals("class2_exp_percent")) {
-        	if (h.getLevel(h.getSecondClass()) != h.getSecondClass().getMaxLevel()) {
-            	return String.valueOf(Math.round(h.getExpPercent(h.getSecondClass())));
+        	if (h.getHeroLevel(h.getSecondaryClass()) != h.getSecondaryClass().getMaxLevel()) {
+            	return String.valueOf(Math.round(h.getExpPercent(h.getSecondaryClass())));
         	}
         	return "100";
         }
@@ -195,19 +209,19 @@ public class HeroesExpansion extends PlaceholderExpansion {
             return "INVALID SKILL";
           }
           
-          return String.valueOf(h.getSkillLevel(skill));
+          return String.valueOf(h.getHeroSkillLevel(skill));
         }
         else if (identifier.equals("class_description")) {
         	return String.valueOf(h.getHeroClass().getDescription());
         }
         else if (identifier.equals("class2_description")) {
-        	return String.valueOf(h.getSecondClass().getDescription());        	
+        	return String.valueOf(h.getSecondaryClass().getDescription());
         }
         else if (identifier.equals("class_tier")) {
         	return String.valueOf(h.getHeroClass().getTier());
         }
         else if (identifier.equals("class2_tier")) {
-        	return String.valueOf(h.getSecondClass().getTier());
+        	return String.valueOf(h.getSecondaryClass().getTier());
         }
         else if (identifier.equals("mastered")) {
         	if (h.getMasteredClasses().size() > 1) {
@@ -252,7 +266,7 @@ public class HeroesExpansion extends PlaceholderExpansion {
             return "&6";
         }
         else if (identifier.equals("class2_ismastered")) {
-        	sk = h.getSecondClass().getName();
+        	sk = h.getSecondaryClass().getName();
         	boolean is = false;
             for (String classname : h.getMasteredClasses()) {
             	if (sk.equalsIgnoreCase(classname)) {
@@ -270,7 +284,7 @@ public class HeroesExpansion extends PlaceholderExpansion {
         	return String.valueOf(h.getHeroClass().getMaxLevel());
         }
         else if (identifier.equals("class2_maxlevel")) {
-        	return String.valueOf(h.getSecondClass().getMaxLevel());
+        	return String.valueOf(h.getSecondaryClass().getMaxLevel());
         }
         
         return null;
